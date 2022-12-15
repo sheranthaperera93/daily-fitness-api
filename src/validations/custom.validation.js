@@ -6,11 +6,10 @@ const objectId = (value, helpers) => {
 };
 
 const password = (value, helpers) => {
-  if (value.length < 8) {
-    return helpers.message('password must be at least 8 characters');
-  }
-  if (!value.match(/\d/) || !value.match(/[a-zA-Z]/)) {
-    return helpers.message('password must contain at least 1 letter and 1 number');
+  if (!value.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+.])[A-Za-z\d!@#$%^&*()_+.]{8,}$/)) {
+    return helpers.message(
+      'Password must contain at least 8 characters, 1 number, 1 uppercase & 1 lowercase letter and one of these special characters (!@#$%^&*()_+.)'
+    );
   }
   return value;
 };

@@ -4,8 +4,9 @@ const { authService, userService, tokenService, emailService } = require('../ser
 
 const register = catchAsync(async (req, res) => {
   const user = await userService.createUser(req.body);
-  const tokens = await tokenService.generateAuthTokens(user);
-  res.status(httpStatus.CREATED).send({ user, tokens });
+  const code = await tokenService.generateUserVerifyOTP(user);
+  await emailService.sendUserVerificationCode(user.email, code);
+  res.status(httpStatus.CREATED).send({ user });
 });
 
 const login = catchAsync(async (req, res) => {
@@ -43,13 +44,30 @@ const sendVerificationEmail = catchAsync(async (req, res) => {
 });
 
 const verifyEmail = catchAsync(async (req, res) => {
-  await authService.verifyEmail(req.query.token);
-  res.status(httpStatus.NO_CONTENT).send();
+  const user = await authService.verifyEmail(req.query.token);
+  res.status(httpStatus.OK).send({ user });
+});
+
+const verifyCode = catchAsync(async (req, res) => {
+  const user = await authService.verifyCode(req.body.user_id, req.body.code);
+  const tokens = await tokenService.generateAuthTokens(user);
+  res.status(httpStatus.OK).send({ user, tokens });
 });
 
 const verifyGoogleToken = catchAsync(async (req, res) => {
-  const googleUserInfo = await authService.verifyGoogleToken(req.body.accessToken);
-  res.send({ googleUserInfo });
+  const googleUser = await authService.verifyGoogleToken(req.body.accessToken, req.body.register);
+  let user = null;
+  if (req.body.register) {
+    // Create new user
+    user = await userService.createUser(googleUser);
+  } else {
+    user = await userService.getUserByEmail(googleUser.email);
+    if (!user) {
+      res.status(httpStatus.NOT_FOUND).send({ status: 'USER_NOT_FOUND', data: '', attribute: '' });
+    }
+  }
+  const tokens = await tokenService.generateAuthTokens(user);
+  res.send({ user, tokens });
 });
 
 module.exports = {
@@ -61,5 +79,6 @@ module.exports = {
   resetPassword,
   sendVerificationEmail,
   verifyEmail,
+  verifyCode,
   verifyGoogleToken,
 };

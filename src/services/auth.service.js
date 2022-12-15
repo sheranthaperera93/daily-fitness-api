@@ -5,18 +5,21 @@ const userService = require('./user.service');
 const Token = require('../models/token.model');
 const ApiError = require('../utils/ApiError');
 const { tokenTypes } = require('../config/tokens');
-const { userTypes } = require('../config/users');
+const { userTypes, userRanks } = require('../config/users');
 
 /**
  * Login with username and password
  * @param {string} email
  * @param {string} password
- * @returns {Promise<User>}
+ * @returns {Promise<user> | ApiError}
  */
 const loginUserWithEmailAndPassword = async (email, password) => {
   const user = await userService.getUserByEmail(email);
   if (!user || !(await user.isPasswordMatch(password))) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect email or password');
+  }
+  if (!user.isEmailVerified) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'User not verified');
   }
   return user;
 };
@@ -86,9 +89,30 @@ const verifyEmail = async (verifyEmailToken) => {
       throw new Error();
     }
     await Token.deleteMany({ user: user.id, type: tokenTypes.VERIFY_EMAIL });
-    await userService.updateUserById(user.id, { isEmailVerified: true });
+    return await userService.updateUserById(user.id, { isEmailVerified: true });
   } catch (error) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Email verification failed');
+  }
+};
+
+/**
+ * Verify code
+ * @param {string} verifyUserId
+ * @param {string} verifyUserCode
+ * @returns {Promise}
+ */
+const verifyCode = async (verifyUserId, verifyUserCode) => {
+  try {
+    const verifyEmailTokenDoc = await tokenService.verifyCode(verifyUserId, verifyUserCode, tokenTypes.VERIFY_OTP);
+    const user = await userService.getUserById(verifyEmailTokenDoc.user);
+    if (!user) {
+      throw new Error();
+    }
+    await Token.deleteMany({ user: user.id, type: tokenTypes.VERIFY_OTP });
+    const newUser = await userService.updateUserById(user.id, { isEmailVerified: true });
+    return newUser;
+  } catch (error) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'User verification failed');
   }
 };
 
@@ -106,23 +130,18 @@ const verifyGoogleToken = async (accessToken) => {
     });
     const userData = {
       name: googleUserInfo.name,
-      first_name: googleUserInfo.given_name,
-      last_name: googleUserInfo.family_name,
-      picture_url: googleUserInfo.picture,
+      firstName: googleUserInfo.given_name,
+      lastName: googleUserInfo.family_name,
+      pictureUrl: googleUserInfo.picture,
       email: googleUserInfo.email,
       type: userTypes.GOOGLE,
       password: generatedPassword,
       isEmailVerified: googleUserInfo.email_verified,
+      rank: userRanks.BEGINER,
     };
-    // Check if user exist
-    const user = await userService.getUserByEmail(userData.email);
-    if (user) {
-      return user;
-    }
-    // Create new user
-    return await userService.createUser(userData);
+    return userData;
   } catch (error) {
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'User processing failed');
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Google verification failed');
   }
 };
 
@@ -132,5 +151,6 @@ module.exports = {
   refreshAuth,
   resetPassword,
   verifyEmail,
+  verifyCode,
   verifyGoogleToken,
 };

@@ -62,6 +62,21 @@ const verifyToken = async (token, type) => {
 };
 
 /**
+ * Verify code and return code doc (or throw an error if it is not valid)
+ * @param {string} userId
+ * @param {string} code
+ * @param {string} type
+ * @returns {Promise<Token>}
+ */
+const verifyCode = async (userId, code, type) => {
+  const tokenDoc = await Token.findOne({ token: code, type, user: userId, blacklisted: false });
+  if (!tokenDoc) {
+    throw new Error('Token not found');
+  }
+  return tokenDoc;
+};
+
+/**
  * Generate auth tokens
  * @param {User} user
  * @returns {Promise<Object>}
@@ -115,6 +130,44 @@ const generateVerifyEmailToken = async (user) => {
 };
 
 /**
+ * Find OTP verification code
+ * @param {String} userId
+ * @returns {Promise<string>}
+ */
+const findVerifyOtpToken = async (userId) => {
+  const tokenDoc = await Token.findOne({ user: userId, type: tokenTypes.VERIFY_OTP });
+  return tokenDoc;
+};
+
+/**
+ * Update OTP verification code
+ * @param {String} userId
+ * @param {String} token
+ * @returns {Promise<string>}
+ */
+const updateVerifyOtpToken = async (userId, token) => {
+  const tokenDoc = await Token.updateOne({ user: userId, type: tokenTypes.VERIFY_OTP }, { token });
+  return tokenDoc;
+};
+
+/**
+ * Generate OTP verification code
+ * @param {User} user
+ * @returns {Promise<string>}
+ */
+const generateUserVerifyOTP = async (user) => {
+  const expires = moment().add(config.jwt.verifiyUserOTPExpirationMinutes, 'minutes');
+  const verifyUserOtp = Math.floor(100000 + Math.random() * 900000);
+  const isExist = await findVerifyOtpToken(user.id);
+  if (isExist) {
+    await updateVerifyOtpToken(user.id, verifyUserOtp);
+  } else {
+    await saveToken(verifyUserOtp, user.id, expires, tokenTypes.VERIFY_OTP);
+  }
+  return verifyUserOtp;
+};
+
+/**
  * Verify google access token and return user info
  * @param {string} accessToken
  * @returns {Promise<string>}
@@ -124,15 +177,17 @@ const verifyGoogleToken = async (accessToken) => {
   if (res.status === httpStatus.OK) {
     return res.data;
   }
-  throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Access token verification failed');
+  throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Google access token verification failed');
 };
 
 module.exports = {
   generateToken,
   saveToken,
+  verifyCode,
   verifyToken,
   generateAuthTokens,
   generateResetPasswordToken,
   generateVerifyEmailToken,
+  generateUserVerifyOTP,
   verifyGoogleToken,
 };
