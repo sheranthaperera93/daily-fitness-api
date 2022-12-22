@@ -1,8 +1,6 @@
 const httpStatus = require('http-status');
 const { User } = require('../models');
 const ApiError = require('../utils/ApiError');
-const { userTypes, userRanks } = require('../config/users');
-const config = require('../config/config');
 
 /**
  * Create a user
@@ -17,15 +15,7 @@ const createUser = async (userBody) => {
     }
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
   }
-  const newUserBody = {
-    pictureUrl: `${config.public_url}/profile_pictures/default_user.png`,
-    type: userTypes.EMAIL,
-    isEmailVerified: false,
-    rank: userRanks.BEGINER,
-    name: `${userBody.firstName} ${userBody.lastName}`,
-    ...userBody,
-  };
-  return User.create(newUserBody);
+  return User.create(userBody);
 };
 
 /**

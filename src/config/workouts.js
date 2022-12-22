@@ -1,0 +1,17 @@
+const workoutTypes = {
+  CARDIO: 1,
+  STEADY_STATE: 2,
+  LOW_AND_MODERATE_INTENSITY: 3,
+  HIGH_INTENSITIY_AND_INTERVALS: 4,
+  SPORTS: 5,
+  WEIGHT_TRAINING: 6,
+  FLEXIBILITY_TRAINING: 7,
+  STRETCHING: 8,
+  YOGA: 9,
+  PILATES: 10,
+  MOBILITY_WORK: 11,
+};
+
+module.exports = {
+  workoutTypes,
+};

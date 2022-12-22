@@ -11,6 +11,10 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   });
 });
 
+if (process.env.NODE_ENV !== 'production') {
+  mongoose.set('debug', true);
+}
+
 const exitHandler = () => {
   if (server) {
     server.close(() => {

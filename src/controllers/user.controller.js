@@ -3,9 +3,19 @@ const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
 const { userService } = require('../services');
+const config = require('../config/config');
+const { userRanks, userTypes } = require('../config/users');
 
 const createUser = catchAsync(async (req, res) => {
-  const user = await userService.createUser(req.body);
+  const body = {
+    pictureUrl: req.body.pictureUrl ? req.body.pictureUrl : `${config.public_url}/user/default_user.png`,
+    type: userTypes.EMAIL,
+    isEmailVerified: false,
+    rank: userRanks.BEGINER,
+    name: req.body.name ? req.body.name : `${req.body.firstName} ${req.body.lastName}`,
+    ...req.body,
+  };
+  const user = await userService.createUser(body);
   res.status(httpStatus.CREATED).send(user);
 });
 

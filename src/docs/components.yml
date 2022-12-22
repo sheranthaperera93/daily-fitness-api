@@ -1,5 +1,39 @@
 components:
   schemas:
+    UserToken:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        pictureUrl:
+          type: string
+        isEmailVerified:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+      example:
+        id: 5ebac534954b54139806c112
+        email: fake@example.com
+        firstName: fake first name
+        lastaName: fake last name
+        role: user
+        pictureUrl: faker picture url
+        isEmailVerified: faker true
+        accessToken: faker random string
+        refreshToken: faker random string
+
     User:
       type: object
       properties:
@@ -47,7 +81,33 @@ components:
         message:
           type: string
 
+    Workout:
+      type: object
+      properties:
+        name:
+          type: string
+        group:
+          type: integer
+        pictureUrl: 
+          type: string
+        description:
+          type: string
+      example:
+        name: faker name
+        group: faker id
+        pictureUrl: faker url
+        description: faker string
+
   responses:
+    DuplicateWorkout:
+      description: Workout already available
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 400
+            message: Workout already available
     DuplicateEmail:
       description: Email already taken
       content:

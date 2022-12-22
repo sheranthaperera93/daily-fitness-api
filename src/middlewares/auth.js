@@ -16,7 +16,8 @@ const verifyCallback = (req, resolve, reject, requiredRights) => async (err, use
       return reject(new ApiError(httpStatus.FORBIDDEN, 'Forbidden'));
     }
   }
-
+  // Adding current auth user ID to process env
+  process.env.userId = user.id;
   resolve();
 };
 

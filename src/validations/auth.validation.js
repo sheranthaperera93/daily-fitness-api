@@ -52,7 +52,7 @@ const verifyEmail = {
 
 const verifyUser = {
   body: Joi.object().keys({
-    user_id: Joi.string().required(),
+    userId: Joi.string().required(),
     code: Joi.string().required(),
   }),
 };

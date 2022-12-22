@@ -267,7 +267,77 @@ module.exports = router;
 
 /**
  * @swagger
- * /auth/verify-email:
+ * /auth/verify/user:
+ *   post:
+ *     summary: verify user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - code
+ *             properties:
+ *               userId:
+ *                 type: string
+ *               code:
+ *                 type: string
+ *             example:
+ *               userId: 639ac38f0c75705944a819c1
+ *               code: 807463
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *              schema:
+ *               $ref: '#/components/schemas/UserToken'
+ *             example:
+ *               code: 401
+ *               message: user verify failed
+ *       "401":
+ *         description: user verify failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               code: 401
+ *               message: user verify failed
+ */
+
+/**
+ * @swagger
+ * /auth/verify/email:
+ *   post:
+ *     summary: verify email
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The verify email token
+ *     responses:
+ *       "204":
+ *         description: No content
+ *       "401":
+ *         description: verify email failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               code: 401
+ *               message: verify email failed
+ */
+
+/**
+ * @swagger
+ * /auth/google-auth:
  *   post:
  *     summary: verify email
  *     tags: [Auth]
